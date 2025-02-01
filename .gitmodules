@@ -1,9 +1,12 @@
 [submodule "vb/external/glfw"]
-	path = vb/external/glfw
+	path = glfw
 	url = https://github.com/glfw/glfw
 [submodule "vb/external/glad"]
-	path = vb/external/glad
+	path = glad
 	url = https://github.com/Dav1dde/glad
 [submodule "vb/external/glm"]
-	path = vb/external/glm
+	path = glm
 	url = https://github.com/g-truc/glm
+[submodule "vb/external/spdlog"]
+	path = spdlog
+	url = https://github.com/gabime/spdlog/
