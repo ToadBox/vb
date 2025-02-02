@@ -249,9 +249,9 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         glm::vec3 model = glm::vec3(1.0f);
         block_shader.setVec3("model", &model);
 
-        spdlog::debug("Camera Pos: {}, {}, {}", camera.Position().x, camera.Position().y, camera.Position().z);
-        spdlog::debug("View Matrix: \n{}\n{}\n{}\n{}", glm::to_string(view[0]), glm::to_string(view[1]), glm::to_string(view[2]), glm::to_string(view[3]));
-        spdlog::debug("Projection Matrix: \n{}\n{}\n{}\n{}", glm::to_string(projection[0]), glm::to_string(projection[1]), glm::to_string(projection[2]), glm::to_string(projection[3]));
+        // spdlog::debug("Camera Pos: {}, {}, {}", camera.Position().x, camera.Position().y, camera.Position().z);
+        // spdlog::debug("View Matrix: \n{}\n{}\n{}\n{}", glm::to_string(view[0]), glm::to_string(view[1]), glm::to_string(view[2]), glm::to_string(view[3]));
+        // spdlog::debug("Projection Matrix: \n{}\n{}\n{}\n{}", glm::to_string(projection[0]), glm::to_string(projection[1]), glm::to_string(projection[2]), glm::to_string(projection[3]));
 
         
         // draw cube

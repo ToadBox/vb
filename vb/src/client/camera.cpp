@@ -1,10 +1,24 @@
 #include "client/camera.hpp"
+#include <spdlog/spdlog.h>
 
-vb::Camera::Camera(glm::vec3 position, float yaw, float pitch) : position(position) {
-    glm::quat yawRot = glm::angleAxis(glm::radians(yaw), up);
-    glm::quat pitchRot = glm::angleAxis(glm::radians(pitch), glm::normalize(glm::cross(front, up)));
-    orientation = glm::normalize(yawRot * pitchRot * orientation);
-    front = orientation * glm::vec3(0.0, 0.0, -1.0);
+#define DEFAULT_SENSITIVITY 0.05f
+#define MINIMUM_SENSITIVITY 0.001f
+#define MAXIMUM_SENSITIVITY 1.0f
+
+namespace {
+    static const glm::vec3 X(1.0, 0.0, 0.0);
+    static const glm::vec3 Y(0.0, 1.0, 0.0);
+    static const glm::vec3 Z(0.0, 0.0, 1.0);
+}
+
+vb::Camera::Camera(glm::vec3 position, float yaw, float pitch) : position(position), pitch(pitch), yaw(yaw) {
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front = glm::normalize(front);
+    proj_front = glm::normalize(glm::dot(front, X)*X + glm::dot(front, Z)*Z);
+
+    sensitivity = DEFAULT_SENSITIVITY;
 }
 
 void vb::Camera::Move(CameraMovementDirection direction, float dt) {
@@ -13,43 +27,53 @@ void vb::Camera::Move(CameraMovementDirection direction, float dt) {
     // utilizing provided direction, change the position of the camera
     switch (direction) {
         case CameraMovementDirection::FORWARD:
-            position += camera_speed * front;
+            position += camera_speed * proj_front;
             break;
         case CameraMovementDirection::BACKWARD:
-            position -= camera_speed * front;
+            position -= camera_speed * proj_front;
             break;
         case CameraMovementDirection::LEFT:
-            position -= camera_speed * glm::normalize(glm::cross(front, up));
+            position -= camera_speed * glm::cross(front, world_up);
             break;
         case CameraMovementDirection::RIGHT:
-            position += camera_speed * glm::normalize(glm::cross(front, up));
+            position += camera_speed * glm::cross(front, world_up);
             break;
         case CameraMovementDirection::UP:
-            position += camera_speed * up;
+            position += camera_speed * world_up;
             break;
         case CameraMovementDirection::DOWN:
-            position -= camera_speed * up;
+            position -= camera_speed * world_up;
             break;
         default:
             break;
     }
-    // regenerate look at orientation quaternion
-    // orientation = glm::quatLookAtRH(glm::normalize(position + front), up);
 }
 
 void vb::Camera::Look(float xoff, float yoff) {
-    float angleZ = invertX * xoff * sensitivity;
-    float angleY = invertY * yoff * sensitivity;
+    yaw += invertX * xoff * sensitivity;
+    pitch += invertY * yoff * sensitivity;
 
-    // construct quaternions to represent rotations about the left camera axis and the world up axis.
-    glm::quat yawRot = glm::angleAxis(glm::radians(angleZ), -up);
-    glm::quat pitchRot = glm::angleAxis(glm::radians(angleY), glm::normalize(glm::cross(front, up)));
+    // clamp pitch to avoid gimbal lock
+    if (pitch > 89.0f) pitch = 89.0f;
+    if (pitch < -89.0f) pitch = -89.0f;
 
-    // update front quaternion by applying these delta rotations
-    orientation = glm::normalize(yawRot * pitchRot * orientation);
-    front = orientation * glm::vec3(0.0, 0.0, -1.0);
+    // Calculate the new front vector based on yaw and pitch
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front = glm::normalize(front);
+
+    // Update the projected front vector
+    proj_front = glm::normalize(glm::dot(front, X) * X + glm::dot(front, Z) * Z);
 }
 
 const glm::mat4 vb::Camera::View() const {
-    return glm::lookAtRH(position, position+front, up);
+    return glm::lookAt(position, position+front, glm::vec3(0.0, 1.0, 0.0));
+}
+
+void vb::Camera::setSensitivity(float sens) {
+    if (sens < MINIMUM_SENSITIVITY) sens = MINIMUM_SENSITIVITY;
+    else if (sens > MAXIMUM_SENSITIVITY) sens = MAXIMUM_SENSITIVITY;
+    
+    sensitivity = sens;
 }
