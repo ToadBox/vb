@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 
+#include "core/registry_object.hpp"
+
 namespace vb {
 
 enum class BlockRenderType : uint32_t {
@@ -12,13 +14,14 @@ enum class BlockRenderType : uint32_t {
     LIQUID
 };
 
-class Block {
+class Block : RegistryObject {
 public:
     Block(const std::string& name);
 
+    BlockRenderType GetRenderType() {return render_type;};
 private:
-    std::string name;
     BlockRenderType render_type;
+    float hardness;
 };
 
 }
