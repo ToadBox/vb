@@ -1,4 +1,5 @@
 #ifndef VB_BLOCK_HPP
+#define VB_BLOCK_HPP
 
 #include <cstdint>
 #include <string>
