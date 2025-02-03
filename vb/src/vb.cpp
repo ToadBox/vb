@@ -93,12 +93,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     spdlog::set_default_logger(console);
     spdlog::info("VB Startup");
     spdlog::info("SPDLog {}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-    spdlog::set_level(spdlog::level::info);
-    // spdlog::set_level(spdlog::level::debug); 
-
-    // create camera and input objects
-    vb::Camera camera = vb::Camera();
-    vb::Input input = vb::Input();
+    spdlog::set_level(spdlog::level::debug);
 
     // setup window
     if (glfwInit() == GLFW_FALSE) {
@@ -132,7 +127,6 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     glViewport(0, 0, framebufferWidth, framebufferHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     input.init(window, &camera);
-	
     window_width = framebufferWidth;
     window_height = framebufferHeight;
 
@@ -180,14 +174,13 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         spdlog::error("Failed to load texture {}", loc);
     }
     stbi_image_free(data);
-
     // Initialize ImGui
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	ImGui::StyleColorsDark();
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 330");
+	  IMGUI_CHECKVERSION();
+	  ImGui::CreateContext();
+	  ImGuiIO& io = ImGui::GetIO(); (void)io;
+	  ImGui::StyleColorsDark();
+	  ImGui_ImplGlfw_InitForOpenGL(window, true);
+	  ImGui_ImplOpenGL3_Init("#version 330");
 
     // main loop
     while (!glfwWindowShouldClose(window)) {
@@ -204,10 +197,9 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         glBindTexture(GL_TEXTURE_2D, texture);
 
         // New ImGui frame
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
+		    ImGui_ImplOpenGL3_NewFrame();
+		    ImGui_ImplGlfw_NewFrame();
+		    ImGui::NewFrame();
         block_shader.use();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(window_width) / window_height, 0.1f, 1000.0f);
         block_shader.setMat4("projection", &projection);
@@ -231,15 +223,15 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
             ImGui::End();
         }
         ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
 
     ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
+	  ImGui_ImplGlfw_Shutdown();
+  	ImGui::DestroyContext();
 
     glfwTerminate();
 }

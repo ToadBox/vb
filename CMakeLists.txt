@@ -15,6 +15,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_SOURCE_DIR}/build/debug")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 add_executable(vb vb/src/vb.cpp vb/src/core/game.cpp vb/src/core/shader.cpp vb/src/client/camera.cpp vb/src/client/input.cpp)
+
 target_include_directories(vb PRIVATE ${CMAKE_SOURCE_DIR}/vb/include ${CMAKE_SOURCE_DIR}/external)
 
 # Add GLFW
