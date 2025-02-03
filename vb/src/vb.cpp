@@ -1,5 +1,9 @@
 #include <cstdio>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -15,6 +19,7 @@
 
 #include "core/shader.hpp"
 #include "client/camera.hpp"
+#include "client/input.hpp"
 
 namespace {
     float vertices[] = {
@@ -67,8 +72,6 @@ namespace {
     unsigned int window_width = 0;
     unsigned int window_height = 0;
 
-    vb::Camera camera;
-
     float dt;
     float last_frame = 0.0f;
 }
@@ -78,58 +81,6 @@ void framebuffer_size_callback([[maybe_unused]] GLFWwindow* window, int width, i
     glViewport(0, 0, width, height);
     window_width = width;
     window_height = height;
-}
-
-// process keyboard input events
-void processInput(GLFWwindow* window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-    
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera.Move(vb::CameraMovementDirection::FORWARD, dt);
-    }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera.Move(vb::CameraMovementDirection::BACKWARD, dt);
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        camera.Move(vb::CameraMovementDirection::LEFT, dt);
-    }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        camera.Move(vb::CameraMovementDirection::RIGHT, dt);
-    }
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
-        camera.Move(vb::CameraMovementDirection::DOWN, dt);
-    }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        camera.Move(vb::CameraMovementDirection::UP, dt);
-    }
-}
-
-void mouse_callback([[maybe_unused]] GLFWwindow* window, double xpos, double ypos) {
-    static float lastX, lastY;
-    static bool first_mouse = true;
-	if (first_mouse)
-	{
-		lastX = xpos;
-		lastY = ypos;
-		first_mouse = false;
-	}
-
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
-	lastX = xpos;
-	lastY = ypos;
-
-	camera.Look(xoffset, yoffset);
-}
-
-void scroll_callback([[maybe_unused]] GLFWwindow* window, [[maybe_unused]] double xoffset, [[maybe_unused]] double yoffset) {
-    spdlog::debug("You scrolla da mouse wheel");
-}
-
-void mouse_button_callback([[maybe_unused]] GLFWwindow* window, int button, int action, int mods) {
-    spdlog::debug("You clicka da mouse button {}, {}, {}", button, action, mods);
 }
 
 int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
@@ -142,7 +93,12 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     spdlog::set_default_logger(console);
     spdlog::info("VB Startup");
     spdlog::info("SPDLog {}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-    spdlog::set_level(spdlog::level::debug);
+    // spdlog::set_level(spdlog::level::info);
+    spdlog::set_level(spdlog::level::debug); 
+
+    // create camera and input objects
+    vb::Camera camera = vb::Camera();
+    vb::Input input = vb::Input();
 
     // setup window
     if (glfwInit() == GLFW_FALSE) {
@@ -170,15 +126,13 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     }
     spdlog::info("Loaded OpenGL {}.{}", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
-    // set viewport and bind viewport callback for window resizing
+    // set viewport and bind callbacks for window resizing and input
     int framebufferWidth, framebufferHeight;
     glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
     glViewport(0, 0, framebufferWidth, framebufferHeight);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetScrollCallback(window, scroll_callback);
-	glfwSetMouseButtonCallback(window, mouse_button_callback);
+    input.init(window, &camera);
+	
     window_width = framebufferWidth;
     window_height = framebufferHeight;
 
@@ -227,6 +181,14 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     }
     stbi_image_free(data);
 
+    // Initialize ImGui
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 330");
+
     // main loop
     while (!glfwWindowShouldClose(window)) {
         // update dt
@@ -234,12 +196,17 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         dt = current_frame - last_frame;
         last_frame = current_frame;
         // process input events
-        processInput(window);
+        input.processInput(dt);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindTexture(GL_TEXTURE_2D, texture);
+
+        // New ImGui frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
         block_shader.use();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(window_width) / window_height, 0.1f, 1000.0f);
@@ -252,17 +219,27 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         // spdlog::debug("Camera Pos: {}, {}, {}", camera.Position().x, camera.Position().y, camera.Position().z);
         // spdlog::debug("View Matrix: \n{}\n{}\n{}\n{}", glm::to_string(view[0]), glm::to_string(view[1]), glm::to_string(view[2]), glm::to_string(view[3]));
         // spdlog::debug("Projection Matrix: \n{}\n{}\n{}\n{}", glm::to_string(projection[0]), glm::to_string(projection[1]), glm::to_string(projection[2]), glm::to_string(projection[3]));
-
         
         // draw cube
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
+        if (input.getContext()->debug) {
+            ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("Position: x: %0.6f, y: %0.6f, z: %0.6f", camera.Position().x, camera.Position().y, camera.Position().z);
+            ImGui::End();
+        }
+        ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
-    
+
+    ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 
     glfwTerminate();
 }
