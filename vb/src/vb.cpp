@@ -95,6 +95,10 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     spdlog::info("SPDLog {}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
     spdlog::set_level(spdlog::level::debug);
 
+    // setup input and camera
+    vb::Camera camera;
+    vb::Input input;
+
     // setup window
     if (glfwInit() == GLFW_FALSE) {
         spdlog::critical("GLFW Window was unable to be initialized. Exiting.");
