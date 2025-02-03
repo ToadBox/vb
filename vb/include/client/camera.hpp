@@ -1,4 +1,5 @@
 #ifndef VB_CAMERA_HPP
+#define VB_CAMERA_HPP
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>

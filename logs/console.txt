@@ -1,3 +1,0 @@
-[2025-01-31 17:46:14.996] [console] [info] VB Startup
-[2025-01-31 17:46:14.996] [console] [info] SPDLog 1.15.0
-[2025-01-31 17:46:16.406] [console] [info] Loaded OpenGL 3.3
