@@ -93,8 +93,8 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     spdlog::set_default_logger(console);
     spdlog::info("VB Startup");
     spdlog::info("SPDLog {}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
-    // spdlog::set_level(spdlog::level::info);
-    spdlog::set_level(spdlog::level::debug); 
+    spdlog::set_level(spdlog::level::info);
+    // spdlog::set_level(spdlog::level::debug); 
 
     // create camera and input objects
     vb::Camera camera = vb::Camera();
