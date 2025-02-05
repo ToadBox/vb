@@ -2,8 +2,11 @@
 
 #include "spdlog/spdlog.h"
 
+#define KEY_DOWN (GLFW_PRESS | GLFW_REPEAT)
+
 namespace {
     bool initialized = false;
+    bool first_mouse = true;
 }
 
 std::unordered_map<int, int> vb::Input::key_state = {};
@@ -15,6 +18,7 @@ vb::Camera* vb::Input::camera = nullptr;
 GLFWwindow* vb::Input::window = nullptr;
 vb::Input::shared_context vb::Input::context = {};
 bool vb::Input::shared_context::debug = false;
+bool vb::Input::shared_context::paused = false;
 
 void vb::Input::init(GLFWwindow* _window, Camera* _camera) {
     if (!initialized) {
@@ -36,29 +40,28 @@ void vb::Input::init(GLFWwindow* _window, Camera* _camera) {
 }
 
 void vb::Input::processInput(float dt) {
-    // temporary way to quickly exit the game
-    if (getKeyState(GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-    }
-
-    if (currentMode == vb::InputMode::SPECTATOR) {
-        if (getKeyState(GLFW_KEY_W) == GLFW_PRESS) {
-            camera->Move(vb::CameraMovementDirection::FORWARD, dt);
-        }
-        if (getKeyState(GLFW_KEY_S) == GLFW_PRESS) {
-            camera->Move(vb::CameraMovementDirection::BACKWARD, dt);
-        }
-        if (getKeyState(GLFW_KEY_A) == GLFW_PRESS) {
-            camera->Move(vb::CameraMovementDirection::LEFT, dt);
-        }
-        if (getKeyState(GLFW_KEY_D) == GLFW_PRESS) {
-            camera->Move(vb::CameraMovementDirection::RIGHT, dt);
-        }
-        if (getKeyState(GLFW_KEY_C) == GLFW_PRESS) {
-            camera->Move(vb::CameraMovementDirection::DOWN, dt);
-        }
-        if (getKeyState(GLFW_KEY_SPACE) == GLFW_PRESS) {
-            camera->Move(vb::CameraMovementDirection::UP, dt);
+    if (context.paused){
+        /* code */
+    } else {
+        if (currentMode == vb::InputMode::SPECTATOR) {
+            if (getKeyState(GLFW_KEY_W) & KEY_DOWN) {
+                camera->Move(vb::CameraMovementDirection::FORWARD, dt);
+            }
+            if (getKeyState(GLFW_KEY_S) & KEY_DOWN) {
+                camera->Move(vb::CameraMovementDirection::BACKWARD, dt);
+            }
+            if (getKeyState(GLFW_KEY_A) & KEY_DOWN) {
+                camera->Move(vb::CameraMovementDirection::LEFT, dt);
+            }
+            if (getKeyState(GLFW_KEY_D) & KEY_DOWN) {
+                camera->Move(vb::CameraMovementDirection::RIGHT, dt);
+            }
+            if (getKeyState(GLFW_KEY_C) & KEY_DOWN) {
+                camera->Move(vb::CameraMovementDirection::DOWN, dt);
+            }
+            if (getKeyState(GLFW_KEY_SPACE) & KEY_DOWN) {
+                camera->Move(vb::CameraMovementDirection::UP, dt);
+            }
         }
     }
 }
@@ -91,32 +94,41 @@ vb::Input::shared_context* vb::Input::getContext() {
     return &context;
 }
 
-void vb::Input::keyCallback([[maybe_unused]] GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, int mods) {
+void vb::Input::keyCallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, int mods) {
     key_state[key] = action;
     key_mods[key] = mods;
 
     if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
         context.debug = !context.debug;
     }
-    spdlog::debug("Key pressed; key:{}, scancode:{}, action:{}, mods:{}", key, scancode, action, mods);
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        context.paused = !context.paused;
+        glfwSetInputMode(window, GLFW_CURSOR, context.paused ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+        first_mouse = true;
+    }
+    
+    // spdlog::debug("Key pressed; key:{}, scancode:{}, action:{}, mods:{}", key, scancode, action, mods);
 }
 
 void vb::Input::mouseCallback([[maybe_unused]] GLFWwindow* window, double xpos, double ypos) {
     static float lastX, lastY;
-    static bool first_mouse = true;
-	if (first_mouse)
-	{
-		lastX = xpos;
-		lastY = ypos;
-		first_mouse = false;
-	}
 
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos;
-	lastX = xpos;
-	lastY = ypos;
+    if (context.paused){
+        /* code */
+    } else {
+        if (first_mouse) {
+            lastX = xpos;
+            lastY = ypos;
+            first_mouse = false;
+        }
 
-	camera->Look(xoffset, yoffset);
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos;
+        lastX = xpos;
+        lastY = ypos;
+
+        camera->Look(xoffset, yoffset);
+    }
 }
 
 // todo: how tf

@@ -22,6 +22,7 @@ class Input {
 public:
     struct shared_context {
         static bool debug;
+        static bool paused;
     };
 
     static void init(GLFWwindow* window, Camera* camera);

@@ -6,10 +6,17 @@
 
 namespace vb {
 
+struct RegistryObjectHash {
+    size_t operator()(const uint64_t& ID) const {
+        return std::hash<uint64_t>()(ID);
+    }
+};
+
 class RegistryObject {
 public:
-    uint64_t inline GetID() {return ID;};
-    std::string inline GetName() {return name;};
+    RegistryObject(const std::string& name) : name(name) {};
+    virtual ~RegistryObject() = default;
+    const inline std::string& GetName() const {return name;};
 private:
     uint64_t ID;
     std::string name;

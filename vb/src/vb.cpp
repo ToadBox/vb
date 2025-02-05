@@ -20,6 +20,10 @@
 #include "core/shader.hpp"
 #include "client/camera.hpp"
 #include "client/input.hpp"
+#include "client/profiling.hpp"
+
+#include "core/blocks.hpp"
+#include "core/world.hpp"
 
 namespace {
     float vertices[] = {
@@ -71,9 +75,6 @@ namespace {
 
     unsigned int window_width = 0;
     unsigned int window_height = 0;
-
-    float dt;
-    float last_frame = 0.0f;
 }
 
 // callback for window resize
@@ -93,6 +94,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     spdlog::set_default_logger(console);
     spdlog::info("VB Startup");
     spdlog::info("SPDLog {}.{}.{}", SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH);
+    // spdlog::set_level(spdlog::level::info);
     spdlog::set_level(spdlog::level::debug);
 
     // setup input and camera
@@ -166,8 +168,8 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     int width, height, nrChannels;
     const char* loc = "/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png";
     unsigned char *data = stbi_load(loc, &width, &height, &nrChannels, 0);
@@ -179,12 +181,25 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     }
     stbi_image_free(data);
     // Initialize ImGui
-	  IMGUI_CHECKVERSION();
-	  ImGui::CreateContext();
-	  ImGuiIO& io = ImGui::GetIO(); (void)io;
-	  ImGui::StyleColorsDark();
-	  ImGui_ImplGlfw_InitForOpenGL(window, true);
-	  ImGui_ImplOpenGL3_Init("#version 330");
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
+    // register blocks
+    vb::Blocks::registerBlocks();
+
+    // create world
+    vb::World world;
+
+    vb::Profiler profiler;
+
+    float dt;
+    float last_frame = 0.0f;
+    int FPS_CAP = 60;
+    float frameDuration = 0.0f;
 
     // main loop
     while (!glfwWindowShouldClose(window)) {
@@ -192,18 +207,22 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         float current_frame = glfwGetTime();
         dt = current_frame - last_frame;
         last_frame = current_frame;
+
+        // update fps
+        profiler.beginFrame();
+
         // process input events
         input.processInput(dt);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    
         glBindTexture(GL_TEXTURE_2D, texture);
 
         // New ImGui frame
-		    ImGui_ImplOpenGL3_NewFrame();
-		    ImGui_ImplGlfw_NewFrame();
-		    ImGui::NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
         block_shader.use();
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(window_width) / window_height, 0.1f, 1000.0f);
         block_shader.setMat4("projection", &projection);
@@ -216,21 +235,38 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         // spdlog::debug("View Matrix: \n{}\n{}\n{}\n{}", glm::to_string(view[0]), glm::to_string(view[1]), glm::to_string(view[2]), glm::to_string(view[3]));
         // spdlog::debug("Projection Matrix: \n{}\n{}\n{}\n{}", glm::to_string(projection[0]), glm::to_string(projection[1]), glm::to_string(projection[2]), glm::to_string(projection[3]));
         
+        world.update();
+
         // draw cube
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
+        // draw world
+        world.update();
+        
+
         if (input.getContext()->debug) {
             ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text("Position: x: %0.6f, y: %0.6f, z: %0.6f", camera.Position().x, camera.Position().y, camera.Position().z);
+            ImGui::SliderInt("FPS target", &FPS_CAP, 30, 144);
+            ImGui::Text("FPS: %0.1f", profiler.getFPS());
+            ImGui::Text("Frametime: %0.2f us", profiler.getFrametimeUS());
             ImGui::End();
         }
         ImGui::Render();
-		    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwPollEvents();
         glfwSwapBuffers(window);
+
+        // FPS Cap (Sleep if frame rendered too fast)
+        frameDuration = glfwGetTime() - current_frame;
+        float desired_frame_time = 1.0f / FPS_CAP;
+        if (desired_frame_time > frameDuration) {
+            std::this_thread::sleep_for(std::chrono::duration<float>(desired_frame_time - frameDuration));
+        }
+        profiler.endFrame();
     }
 
     ImGui_ImplOpenGL3_Shutdown();
