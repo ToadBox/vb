@@ -29,43 +29,69 @@
 #include "core/texture_atlas.hpp"
 
 namespace {
+    // float vertices[] = {
+    //     // Vertices         UV Tex Coords
+    //     // Face 1
+    //     1.0, 1.0, -1.0,     1.0, 1.0,
+    //     1.0, 1.0, 1.0,      1.0, 0.0,
+    //     -1.0, 1.0, 1.0,     0.0, 0.0,
+    //     -1.0, 1.0, -1.0,    0.0, 1.0,
+
+    //     // Face 2
+    //     1.0, 1.0, 1.0,      1.0, 1.0,
+    //     1.0, -1.0, 1.0,     1.0, 0.0,
+    //     -1.0, -1.0, 1.0,    0.0, 0.0,
+    //     -1.0, 1.0, 1.0,     0.0, 1.0,
+
+    //     // Face 3
+    //     1.0, 1.0, -1.0,     1.0, 1.0,
+    //     1.0, -1.0, -1.0,    1.0, 0.0,
+    //     1.0, -1.0, 1.0,     0.0, 0.0,
+    //     1.0, 1.0, 1.0,      0.0, 1.0,
+
+    //     // Face 4
+    //     -1.0, 1.0, 1.0,     1.0, 1.0,
+    //     -1.0, -1.0, 1.0,    1.0, 0.0,
+    //     -1.0, -1.0, -1.0,   0.0, 0.0,
+    //     -1.0, 1.0, -1.0,    0.0, 1.0,
+
+    //     // Face 5
+    //     -1.0, 1.0, -1.0,    1.0, 1.0,
+    //     -1.0, -1.0, -1.0,   1.0, 0.0,
+    //     1.0, -1.0, -1.0,    0.0, 0.0,
+    //     1.0, 1.0, -1.0,     0.0, 1.0,
+
+    //     // Face 6
+    //     1.0, -1.0, 1.0,     1.0, 1.0,
+    //     1.0, -1.0, -1.0,    1.0, 0.0,
+    //     -1.0, -1.0, -1.0,   0.0, 0.0,
+    //     -1.0, -1.0, 1.0,    0.0, 1.0
+    // };
     float vertices[] = {
-        // Vertices         UV Tex Coords
-        // Face 1
-        1.0, 1.0, -1.0,     1.0, 1.0,
-        1.0, 1.0, 1.0,      1.0, 0.0,
-        -1.0, 1.0, 1.0,     0.0, 0.0,
-        -1.0, 1.0, -1.0,    0.0, 1.0,
-
-        // Face 2
-        1.0, 1.0, 1.0,      1.0, 1.0,
-        1.0, -1.0, 1.0,     1.0, 0.0,
-        -1.0, -1.0, 1.0,    0.0, 0.0,
-        -1.0, 1.0, 1.0,     0.0, 1.0,
-
-        // Face 3
-        1.0, 1.0, -1.0,     1.0, 1.0,
-        1.0, -1.0, -1.0,    1.0, 0.0,
-        1.0, -1.0, 1.0,     0.0, 0.0,
-        1.0, 1.0, 1.0,      0.0, 1.0,
-
-        // Face 4
-        -1.0, 1.0, 1.0,     1.0, 1.0,
-        -1.0, -1.0, 1.0,    1.0, 0.0,
-        -1.0, -1.0, -1.0,   0.0, 0.0,
-        -1.0, 1.0, -1.0,    0.0, 1.0,
-
-        // Face 5
-        -1.0, 1.0, -1.0,    1.0, 1.0,
-        -1.0, -1.0, -1.0,   1.0, 0.0,
-        1.0, -1.0, -1.0,    0.0, 0.0,
-        1.0, 1.0, -1.0,     0.0, 1.0,
-
-        // Face 6
-        1.0, -1.0, 1.0,     1.0, 1.0,
-        1.0, -1.0, -1.0,    1.0, 0.0,
-        -1.0, -1.0, -1.0,   0.0, 0.0,
-        -1.0, -1.0, 1.0,    0.0, 1.0
+        1,1,1,1,1,
+        0,1,1,1,0,
+        0,1,0,0,0,
+        1,1,0,0,1,
+        0,1,1,1,1,
+        0,0,1,1,0,
+        0,0,0,0,0,
+        0,1,0,1,1,
+        1,1,1,1,1,
+        1,0,1,1,0,
+        0,0,1,0,0,
+        0,1,1,1,1,
+        0,1,0,1,1,
+        0,0,0,1,0,
+        1,0,0,0,0,
+        1,1,0,1,1,
+        1,1,1,1,1,
+        1,0,1,0,0,
+        1,1,0,1,0,
+        1,0,0,1,1,
+        1,0,1,1,1,
+        1,0,0,1,0,
+        0,0,0,0,0,
+        0,0,1,1,1
     };
     unsigned int indices[] = {
         0, 1, 2, 0, 2, 3,       // TOP (1)
@@ -174,10 +200,10 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     int width, height, nrChannels;
-    const char* loc = "/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png";
+    const char* loc = "/home/yameat/Desktop/Programming/vb/assets/blocks/glorm.png";
     unsigned char *data = stbi_load(loc, &width, &height, &nrChannels, 0);
     if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         spdlog::error("Failed to load texture {}", loc);
@@ -198,7 +224,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     // create world
     // vb::World world;
     vb::TextureAtlas* atlas = &vb::TextureAtlas::getAtlas();
-    atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png");
+    atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/glorm.png");
     vb::Planet earth;
     earth.setChunkDefaultShader(&block_shader);
 
@@ -244,13 +270,13 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         // draw world
         // world.update();
         earth.update();
-        // earth.render();
+        earth.render();
 
         // draw cube
-        glBindVertexArray(2);
-        glBindTexture(GL_TEXTURE_2D, atlas->getTex());
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
+        // glBindVertexArray(VAO);
+        // glBindTexture(GL_TEXTURE_2D, atlas->getTex());
+        // glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        // glBindVertexArray(0);
 
         if (input.getContext()->debug) {
             ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
