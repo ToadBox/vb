@@ -2,20 +2,22 @@
 
 #include "spdlog/spdlog.h"
 #include "glm/gtc/matrix_transform.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/string_cast.hpp"
 
 vb::PlanetPos::PlanetPos(int64_t x, int64_t y, int64_t z) : glm::i64vec3(x,y,z) {
     
 }
 
 vb::Planet::Planet() {
-    // uint16_t i = 0;
-    // for (int8_t x = -1; x <= 1; x++) {
-    //     for (int8_t z = -1; z <= 1; z++) {
-            loaded_chunks[PlanetPos(0, 0, 0)] = new Chunk();
-        //     i++;
-
-        // }
-    // }
+    uint16_t i = 0;
+    for (int8_t x = -1; x <= 1; x++) {
+        for (int8_t z = -1; z <= 1; z++) {
+            auto pos = PlanetPos(x, -1, z);
+            loaded_chunks[pos] = new Chunk(this, pos);
+            i++;
+        }
+    }
 }
 
 vb::Planet::~Planet() {
@@ -41,14 +43,20 @@ void vb::Planet::update() {
 }
 
 void vb::Planet::render() {
+    static bool log_once = true;
     // render all chunks
     for (auto& [pos,chunk] : loaded_chunks) {
         if (chunk == nullptr) {
             continue;
         }
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(pos.x, pos.y, pos.z));
-        // shader->setMat4("model", &model);
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, pos.z) * static_cast<float>(vb::Chunk::SIZE));
+        shader->use();
+        shader->setMat4("model", &model);
+        
+        if (log_once) {
+            spdlog::warn(glm::to_string(model));
+            log_once = false;
+        }
 
         chunk->render();
     }
@@ -62,4 +70,12 @@ void vb::Planet::setChunkDefaultShader(Shader* shader) {
         }
         chunk->setDefaultShader(shader);
     }
+}
+
+vb::Chunk* vb::Planet::getChunkAt(const PlanetPos& pos) {
+    if (loaded_chunks.count(pos)) {
+        return loaded_chunks[pos];
+    }
+
+    return nullptr;
 }

@@ -21,6 +21,7 @@ public:
     void render();
 
     void setChunkDefaultShader(Shader* shader);
+    Chunk* getChunkAt(const PlanetPos& pos);
 private:
     // RingBuffer<Chunk, 16> loaded_chunks;
     std::unordered_map<PlanetPos, Chunk*, PlanetPosHash> loaded_chunks;

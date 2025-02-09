@@ -1,5 +1,6 @@
 #include "client/camera.hpp"
 #include <spdlog/spdlog.h>
+#include <algorithm>
 
 #define DEFAULT_SENSITIVITY 0.05f
 #define MINIMUM_SENSITIVITY 0.001f
@@ -75,6 +76,19 @@ void vb::Camera::Look(float xoff, float yoff) {
 
 const glm::mat4 vb::Camera::View() const {
     return glm::lookAt(position, position+front, glm::vec3(0.0, 1.0, 0.0));
+}
+
+std::string vb::Camera::LookingTowards() const {
+    std::string result = "";
+    float dotx = glm::dot(front, glm::vec3(1,0,0));
+    result = dotx >= 0 ? "+" : "-";
+    result += "X";
+    float dotz = glm::dot(front, glm::vec3(0,0,1));
+    if (dotz > dotx) {
+        result = dotz >= 0 ? "+" : "-";
+        result += "Z";
+    }
+    return result;
 }
 
 void vb::Camera::setSensitivity(float sens) {

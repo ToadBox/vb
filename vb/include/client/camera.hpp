@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <cstdint>
+#include <string>
 
 namespace vb {
 
@@ -30,6 +31,7 @@ public:
 
     glm::vec3 Position() const {return position;};
     glm::vec2 Heading() const {return glm::vec2(pitch, yaw);};
+    std::string LookingTowards() const;
 
     void setSensitivity(float sensitivity);
 private:

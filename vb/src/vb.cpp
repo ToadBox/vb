@@ -29,69 +29,43 @@
 #include "core/texture_atlas.hpp"
 
 namespace {
-    // float vertices[] = {
-    //     // Vertices         UV Tex Coords
-    //     // Face 1
-    //     1.0, 1.0, -1.0,     1.0, 1.0,
-    //     1.0, 1.0, 1.0,      1.0, 0.0,
-    //     -1.0, 1.0, 1.0,     0.0, 0.0,
-    //     -1.0, 1.0, -1.0,    0.0, 1.0,
-
-    //     // Face 2
-    //     1.0, 1.0, 1.0,      1.0, 1.0,
-    //     1.0, -1.0, 1.0,     1.0, 0.0,
-    //     -1.0, -1.0, 1.0,    0.0, 0.0,
-    //     -1.0, 1.0, 1.0,     0.0, 1.0,
-
-    //     // Face 3
-    //     1.0, 1.0, -1.0,     1.0, 1.0,
-    //     1.0, -1.0, -1.0,    1.0, 0.0,
-    //     1.0, -1.0, 1.0,     0.0, 0.0,
-    //     1.0, 1.0, 1.0,      0.0, 1.0,
-
-    //     // Face 4
-    //     -1.0, 1.0, 1.0,     1.0, 1.0,
-    //     -1.0, -1.0, 1.0,    1.0, 0.0,
-    //     -1.0, -1.0, -1.0,   0.0, 0.0,
-    //     -1.0, 1.0, -1.0,    0.0, 1.0,
-
-    //     // Face 5
-    //     -1.0, 1.0, -1.0,    1.0, 1.0,
-    //     -1.0, -1.0, -1.0,   1.0, 0.0,
-    //     1.0, -1.0, -1.0,    0.0, 0.0,
-    //     1.0, 1.0, -1.0,     0.0, 1.0,
-
-    //     // Face 6
-    //     1.0, -1.0, 1.0,     1.0, 1.0,
-    //     1.0, -1.0, -1.0,    1.0, 0.0,
-    //     -1.0, -1.0, -1.0,   0.0, 0.0,
-    //     -1.0, -1.0, 1.0,    0.0, 1.0
-    // };
     float vertices[] = {
-        1,1,1,1,1,
-        0,1,1,1,0,
-        0,1,0,0,0,
-        1,1,0,0,1,
-        0,1,1,1,1,
-        0,0,1,1,0,
-        0,0,0,0,0,
-        0,1,0,1,1,
-        1,1,1,1,1,
-        1,0,1,1,0,
-        0,0,1,0,0,
-        0,1,1,1,1,
-        0,1,0,1,1,
-        0,0,0,1,0,
-        1,0,0,0,0,
-        1,1,0,1,1,
-        1,1,1,1,1,
-        1,0,1,0,0,
-        1,1,0,1,0,
-        1,0,0,1,1,
-        1,0,1,1,1,
-        1,0,0,1,0,
-        0,0,0,0,0,
-        0,0,1,1,1
+        // Vertices         UV Tex Coords
+        // Face 1
+        1.0, 1.0, -1.0,     1.0, 1.0,
+        1.0, 1.0, 1.0,      1.0, 0.0,
+        -1.0, 1.0, 1.0,     0.0, 0.0,
+        -1.0, 1.0, -1.0,    0.0, 1.0,
+
+        // Face 2
+        1.0, 1.0, 1.0,      1.0, 1.0,
+        1.0, -1.0, 1.0,     1.0, 0.0,
+        -1.0, -1.0, 1.0,    0.0, 0.0,
+        -1.0, 1.0, 1.0,     0.0, 1.0,
+
+        // Face 3
+        1.0, 1.0, -1.0,     1.0, 1.0,
+        1.0, -1.0, -1.0,    1.0, 0.0,
+        1.0, -1.0, 1.0,     0.0, 0.0,
+        1.0, 1.0, 1.0,      0.0, 1.0,
+
+        // Face 4
+        -1.0, 1.0, 1.0,     1.0, 1.0,
+        -1.0, -1.0, 1.0,    1.0, 0.0,
+        -1.0, -1.0, -1.0,   0.0, 0.0,
+        -1.0, 1.0, -1.0,    0.0, 1.0,
+
+        // Face 5
+        -1.0, 1.0, -1.0,    1.0, 1.0,
+        -1.0, -1.0, -1.0,   1.0, 0.0,
+        1.0, -1.0, -1.0,    0.0, 0.0,
+        1.0, 1.0, -1.0,     0.0, 1.0,
+
+        // Face 6
+        1.0, -1.0, 1.0,     1.0, 1.0,
+        1.0, -1.0, -1.0,    1.0, 0.0,
+        -1.0, -1.0, -1.0,   0.0, 0.0,
+        -1.0, -1.0, 1.0,    0.0, 1.0
     };
     unsigned int indices[] = {
         0, 1, 2, 0, 2, 3,       // TOP (1)
@@ -165,8 +139,8 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     window_width = framebufferWidth;
     window_height = framebufferHeight;
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // glEnable(GL_CULL_FACE);
     // glCullFace(GL_BACK);
     // glFrontFace(GL_CW);
@@ -200,10 +174,10 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     int width, height, nrChannels;
-    const char* loc = "/home/yameat/Desktop/Programming/vb/assets/blocks/glorm.png";
+    const char* loc = "/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png";
     unsigned char *data = stbi_load(loc, &width, &height, &nrChannels, 0);
     if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     } else {
         spdlog::error("Failed to load texture {}", loc);
@@ -224,7 +198,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     // create world
     // vb::World world;
     vb::TextureAtlas* atlas = &vb::TextureAtlas::getAtlas();
-    atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/glorm.png");
+    atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png");
     vb::Planet earth;
     earth.setChunkDefaultShader(&block_shader);
 
@@ -282,6 +256,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
             ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text("Position: x: %0.6f, y: %0.6f, z: %0.6f", camera.Position().x, camera.Position().y, camera.Position().z);
             ImGui::Text("Heading: Pitch: %0.6f, Yaw: %0.6f", camera.Heading().x, camera.Heading().y);
+            ImGui::Text("Looking towards: %s", camera.LookingTowards().c_str());
             ImGui::SliderInt("FPS target", &FPS_CAP, 30, 144);
             ImGui::Text("FPS: %0.1f", profiler.getFPS());
             ImGui::Text("Frametime: %0.2f us", profiler.getFrametimeUS());

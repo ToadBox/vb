@@ -10,9 +10,11 @@
 #include "core/shader.hpp"
 
 #include "glm/vec3.hpp"
+#include "spdlog/spdlog.h"
 
 namespace vb {
 class Chunk;
+class Planet;
 
 struct ChunkPos : public glm::i32vec3 {
     ChunkPos() = default;
@@ -21,9 +23,11 @@ struct ChunkPos : public glm::i32vec3 {
 
 struct ChunkPosHash {
     size_t operator()(const ChunkPos& v) const {
-        return (std::hash<int32_t>()(v.x) * 73856093) ^ 
-               (std::hash<int32_t>()(v.y) * 47194333) ^ 
-               (std::hash<int32_t>()(v.z) * 83492791);
+        size_t hash = ((31 + std::hash<int32_t>()(v.x)) * 
+                (31 + std::hash<int32_t>()(v.y)) *
+                (31 + std::hash<int32_t>()(v.z))) * 17;
+        // spdlog::debug(hash);
+        return hash;
     }
 };
 
@@ -34,34 +38,38 @@ struct MeshVertex {
 
 class ChunkData {
 public:
-    bool inline isBlockAt(const ChunkPos& pos) const;
+    ChunkData(Chunk* chunk);
+    bool isBlockAt(const ChunkPos& pos) const;
+    bool isBlockWithinBounds(const ChunkPos& pos) const;
 
     void set(const ChunkPos& pos, uint64_t blockID);
     void set(const ChunkPos& pos, Blocks::ByID ID);
 private:
     std::unordered_map<ChunkPos, uint64_t, ChunkPosHash> blocks;
+    Chunk* chunk;
 friend Chunk;
 };
 
 class ChunkMesh {
 public:
-    ChunkMesh();
+    ChunkMesh(Chunk* chunk);
     ChunkMesh(const ChunkMesh&) = delete;
     ~ChunkMesh();
     ChunkMesh& operator=(const ChunkMesh&) = delete;
 private:
     std::vector<MeshVertex> face_vertices;
     std::vector<uint32_t> face_indices;
-    uint64_t num_tri = 0;
+    uint32_t num_tri = 0;
     unsigned int VAO=0, VBO=0, EBO=0;
+    Chunk* chunk;
 friend Chunk;
 };
 
 class Chunk {
 public:
-    static constexpr uint8_t SIZE = 1;
+    static constexpr uint8_t SIZE = 16;
     static_assert(SIZE > 0);
-    Chunk();
+    Chunk(Planet* planet, const PlanetPos& pos);
     Chunk(const Chunk&) = delete;
     ~Chunk();
     Chunk& operator=(const Chunk&) = delete;
@@ -77,8 +85,12 @@ private:
     ChunkData data;
     TextureAtlas* atlas;
     Shader* shader;
+    Planet* planet;
+    PlanetPos pos;
 
     bool dirty;
+friend ChunkMesh;
+friend ChunkData;
 };
 
 }

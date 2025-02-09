@@ -3,24 +3,79 @@
 #include "glad/gl.h"
 
 #include "spdlog/spdlog.h"
+#include "core/planet.hpp"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/string_cast.hpp"
 
 vb::ChunkPos::ChunkPos(int32_t x, int32_t y, int32_t z) : glm::i32vec3(x,y,z) {
 
 }
 
-bool inline vb::ChunkData::isBlockAt(const ChunkPos& pos) const {
+vb::ChunkData::ChunkData(Chunk* chunk) {
+    this->chunk = chunk;
+}
+
+bool vb::ChunkData::isBlockAt(const ChunkPos& pos) const {
+    if (!isBlockWithinBounds(pos)) {
+        ChunkPos modified_chunk_pos = pos;
+        PlanetPos adjacent_chunk_pos = chunk->pos;
+        if (pos.x >= vb::Chunk::SIZE) {
+            adjacent_chunk_pos += glm::i64vec3(1, 0, 0);
+        }
+        if (pos.y >= vb::Chunk::SIZE) {
+            adjacent_chunk_pos += glm::i64vec3(0, 1, 0);
+        }
+        if (pos.z >= vb::Chunk::SIZE) {
+            adjacent_chunk_pos += glm::i64vec3(0, 0, 1);
+        }
+        if (pos.x < 0) {
+            adjacent_chunk_pos -= glm::i64vec3(1, 0, 0);
+        } 
+        if (pos.y < 0) {
+            adjacent_chunk_pos -= glm::i64vec3(0, 1, 0);
+        }
+        if (pos.z < 0) {
+            adjacent_chunk_pos -= glm::i64vec3(0, 0, 1);
+        }
+        modified_chunk_pos.x = (modified_chunk_pos.x + vb::Chunk::SIZE) % vb::Chunk::SIZE;
+        modified_chunk_pos.y = (modified_chunk_pos.y + vb::Chunk::SIZE) % vb::Chunk::SIZE;
+        modified_chunk_pos.z = (modified_chunk_pos.z + vb::Chunk::SIZE) % vb::Chunk::SIZE;
+        
+        Chunk* adjacent = chunk->planet->getChunkAt(adjacent_chunk_pos);
+        if (adjacent == nullptr) {
+            return false;
+        }
+
+        
+        spdlog::debug("{}, {}", glm::to_string((glm::i64vec3)modified_chunk_pos), adjacent->data.isBlockAt(modified_chunk_pos));
+        
+        return adjacent->data.isBlockAt(modified_chunk_pos);
+    }
+    
     return blocks.count(pos);
+}
+
+bool vb::ChunkData::isBlockWithinBounds(const ChunkPos& pos) const {
+    if (pos.x >= Chunk::SIZE || pos.y >= Chunk::SIZE || pos.z >= Chunk::SIZE ||
+        pos.x < 0 || pos.y < 0 || pos.z < 0) {
+            return false;
+    }
+
+    return true;
 }
 
 void vb::ChunkData::set(const ChunkPos& pos, uint64_t blockID) {
     blocks[pos] = blockID;
+    assert(isBlockAt(pos));
 }
  
 void vb::ChunkData::set(const ChunkPos& pos, Blocks::ByID blockID) {
-    blocks[pos] = (uint64_t) blockID;
+    set(pos, (uint64_t) blockID);
 }
 
-vb::ChunkMesh::ChunkMesh() {
+vb::ChunkMesh::ChunkMesh(Chunk* chunk) {
+    this->chunk = chunk;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glGenBuffers(1, &VBO);
@@ -39,32 +94,37 @@ vb::ChunkMesh::~ChunkMesh() {
     glDeleteBuffers(1, &EBO);
 }
 
-vb::Chunk::Chunk() {
+vb::Chunk::Chunk(Planet* planet, const PlanetPos& pos) : mesh(this), data(this) {
+    this->planet = planet;
+    this->pos = pos;
     dirty = true;
     atlas = &vb::TextureAtlas::getAtlas();
 
     // place layer of grass at y=15
     for (uint8_t x = 0; x < Chunk::SIZE; x++) {
         for (uint8_t z = 0; z < Chunk::SIZE; z++) {
-            data.set(ChunkPos(x, SIZE-1, z), Blocks::ByID::GRASS);
+            auto pos = ChunkPos(x, SIZE-1, z);
+            data.set(pos, Blocks::ByID::GRASS);
+            // spdlog::critical(ChunkPosHash()(pos));
         }
     }
-    // // place 5 layers of dirt
-    // for (uint8_t x = 0; x < Chunk::SIZE; x++) {
-    //     for (uint8_t z = 0; z < Chunk::SIZE; z++) {
-    //         for (int8_t y = SIZE-2; y > SIZE-8; y--) {
-    //             data.set(ChunkPos(x, y, z), Blocks::ByID::DIRT);
-    //         }
-    //     }
-    // }
-    // // place 5 layers of dirt
-    // for (uint8_t x = 0; x < Chunk::SIZE; x++) {
-    //     for (uint8_t z = 0; z < Chunk::SIZE; z++) {
-    //         for (int8_t y = SIZE-8; y >= 0; y--) {
-    //             data.set(ChunkPos(x, y, z), Blocks::ByID::STONE);
-    //         }
-    //     }
-    // }
+    // spdlog::critical(data.blocks.size());
+    // place 5 layers of dirt
+    for (uint8_t x = 0; x < Chunk::SIZE; x++) {
+        for (uint8_t z = 0; z < Chunk::SIZE; z++) {
+            for (int8_t y = SIZE-2; y > SIZE-8; y--) {
+                data.set(ChunkPos(x, y, z), Blocks::ByID::DIRT);
+            }
+        }
+    }
+    // place 5 layers of dirt
+    for (uint8_t x = 0; x < Chunk::SIZE; x++) {
+        for (uint8_t z = 0; z < Chunk::SIZE; z++) {
+            for (int8_t y = SIZE-8; y >= 0; y--) {
+                data.set(ChunkPos(x, y, z), Blocks::ByID::STONE);
+            }
+        }
+    }
 }
 
 vb::Chunk::~Chunk() {
@@ -79,31 +139,30 @@ void vb::Chunk::update() {
     if (dirty) {
         build();
     }
-    
 }
 
 void vb::Chunk::render() {
     glBindVertexArray(mesh.VAO);
     glBindTexture(GL_TEXTURE_2D, atlas->getTex());
-    glDrawElements(GL_TRIANGLES, mesh.num_tri, GL_UNSIGNED_INT, 0);
+    shader->use();
+    glDrawElements(GL_TRIANGLES, mesh.face_indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
 
 void vb::Chunk::build() {
     // TODO: greedy mesh?
-    for (auto& [pos, blockid] : data.blocks) {
+    for (auto& [chunkpos, blockid] : data.blocks) {
         NormalizedTextureRegion region = TextureAtlas::getAtlas().getNormalizedTexCoords(blockid);
         uint8_t num_faces_added = 0;
-
-        spdlog::critical("{},{},{},{}", region.x0, region.y0, region.x1, region.y1);
+        glm::vec3 pos = glm::vec3(chunkpos);
         
         // TOP
         if (!data.isBlockAt(ChunkPos(pos.x, pos.y+1, pos.z))) {
             MeshVertex Top[4] = {
-                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x1, region.y1,
-                static_cast<float>(pos.x), pos.y+1.0f, pos.z+1.0f, region.x1, region.y0,
-                static_cast<float>(pos.x), pos.y+1.0f, static_cast<float>(pos.z), region.x0, region.y0,
-                pos.x+1.0f, pos.y+1.0f, static_cast<float>(pos.z), region.x0, region.y1
+                pos.x+1.0f,                 pos.y+1.0f, pos.z+1.0f,                 region.x1, region.y1,
+                pos.x,  pos.y+1.0f, pos.z+1.0f,                 region.x1, region.y0,
+                pos.x,  pos.y+1.0f, pos.z,  region.x0, region.y0,
+                pos.x+1.0f,                 pos.y+1.0f, pos.z,  region.x0, region.y1
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), Top, Top+4);
             num_faces_added++;
@@ -111,10 +170,10 @@ void vb::Chunk::build() {
         // SOUTH
         if (!data.isBlockAt(ChunkPos(pos.x-1, pos.y, pos.z))) {
             MeshVertex South[4] = {
-                static_cast<float>(pos.x), pos.y+1.0f, pos.z+1.0f, region.x1, region.y1,
-                static_cast<float>(pos.x), static_cast<float>(pos.y), pos.z+1.0f, region.x1, region.y0,
-                static_cast<float>(pos.x), static_cast<float>(pos.y), static_cast<float>(pos.z), region.x0, region.y0,
-                static_cast<float>(pos.x), pos.y+1.0f, static_cast<float>(pos.z), region.x0, region.y1
+                pos.x, pos.y+1.0f,                  pos.z+1.0f,                 region.x1, region.y1,
+                pos.x, pos.y,   pos.z+1.0f,                 region.x1, region.y0,
+                pos.x, pos.y,   pos.z,  region.x0, region.y0,
+                pos.x, pos.y+1.0f,                  pos.z,  region.x0, region.y1
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), South, South+4);
             num_faces_added++;
@@ -122,10 +181,10 @@ void vb::Chunk::build() {
         // EAST
         if (!data.isBlockAt(ChunkPos(pos.x, pos.y, pos.z+1))) {
             MeshVertex East[4]  = {
-                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x1, region.y1,
-                pos.x+1.0f, static_cast<float>(pos.y), pos.z+1.0f, region.x1, region.y0,
-                static_cast<float>(pos.x), static_cast<float>(pos.y), pos.z+1.0f, region.x0, region.y0,
-                static_cast<float>(pos.x), pos.y+1.0f, pos.z+1.0f, region.x0, region.y1
+                pos.x+1.0f,                 pos.y+1.0f,                 pos.z+1.0f,     region.x1, region.y1,
+                pos.x+1.0f,                 pos.y,  pos.z+1.0f,     region.x1, region.y0,
+                pos.x,  pos.y,  pos.z+1.0f,     region.x0, region.y0,
+                pos.x,  pos.y+1.0f,                 pos.z+1.0f,     region.x0, region.y1
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), East, East+4);
             num_faces_added++;
@@ -133,10 +192,10 @@ void vb::Chunk::build() {
         // WEST
         if (!data.isBlockAt(ChunkPos(pos.x, pos.y, pos.z-1))) {
             MeshVertex West[4]  = {
-                static_cast<float>(pos.x), pos.y+1.0f, static_cast<float>(pos.z), region.x1, region.y1,
-                static_cast<float>(pos.x), static_cast<float>(pos.y), static_cast<float>(pos.z), region.x1, region.y0,
-                pos.x+1.0f, static_cast<float>(pos.y), static_cast<float>(pos.z), region.x0, region.y0,
-                pos.x+1.0f, pos.y+1.0f, static_cast<float>(pos.z), region.x0, region.y1
+                pos.x,  pos.y+1.0f,                 pos.z,  region.x1, region.y1,
+                pos.x,  pos.y,  pos.z,  region.x1, region.y0,
+                pos.x+1.0f,                 pos.y,  pos.z,  region.x0, region.y0,
+                pos.x+1.0f,                 pos.y+1.0f,                 pos.z,  region.x0, region.y1
             };
             
             mesh.face_vertices.insert(mesh.face_vertices.end(), West, West+4);
@@ -145,10 +204,10 @@ void vb::Chunk::build() {
         // NORTH
         if (!data.isBlockAt(ChunkPos(pos.x+1, pos.y, pos.z))) {
             MeshVertex North[4]  = {
-                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x1, region.y1,
-                pos.x+1.0f, static_cast<float>(pos.y), pos.z+1.0f, region.x1, region.y0,
-                pos.x+1.0f, pos.y+1.0f, static_cast<float>(pos.z), region.x0, region.y0,
-                pos.x+1.0f, static_cast<float>(pos.y), static_cast<float>(pos.z), region.x0, region.y1
+                pos.x+1.0f, pos.y+1.0f,                 pos.z+1.0f,                 region.x0, region.y1,
+                pos.x+1.0f, pos.y,  pos.z+1.0f,                 region.x0, region.y0,
+                pos.x+1.0f, pos.y,  pos.z,  region.x1, region.y0,
+                pos.x+1.0f, pos.y+1.0f,                 pos.z,  region.x1, region.y1
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), North, North+4);
             num_faces_added++;
@@ -156,10 +215,10 @@ void vb::Chunk::build() {
         // BOT
         if (!data.isBlockAt(ChunkPos(pos.x, pos.y-1, pos.z))) {
             MeshVertex Bot[4]  = {
-                pos.x+1.0f, static_cast<float>(pos.y), pos.z+1.0f, region.x1, region.y1,
-                pos.x+1.0f, static_cast<float>(pos.y), static_cast<float>(pos.z), region.x1, region.y0,
-                static_cast<float>(pos.x), static_cast<float>(pos.y), static_cast<float>(pos.z), region.x0, region.y0,
-                static_cast<float>(pos.x), static_cast<float>(pos.y), pos.z+1.0f, region.x0, region.y1
+                pos.x+1.0f,                 pos.y, pos.z+1.0f,                  region.x1, region.y0,
+                pos.x+1.0f,                 pos.y, pos.z,   region.x0, region.y0,
+                pos.x,  pos.y, pos.z,   region.x0, region.y1,
+                pos.x,  pos.y, pos.z+1.0f,                  region.x1, region.y1
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), Bot, Bot+4);
             num_faces_added++;
@@ -173,7 +232,10 @@ void vb::Chunk::build() {
             mesh.face_indices.insert(mesh.face_indices.end(), indices, indices+6);
         }
 
-        mesh.num_tri += num_faces_added * 2;
+        if(num_faces_added > 0) {
+            mesh.num_tri += num_faces_added * 2;
+            // spdlog::warn("{},{},{},{}", region.x0, region.x1, region.y0, region.y1);
+        }
     }
     
     // for (auto& v : mesh.face_vertices) {
@@ -183,7 +245,8 @@ void vb::Chunk::build() {
     //     spdlog::warn("{},{},{}", mesh.face_indices[i], mesh.face_indices[i+1], mesh.face_indices[i+2]);
     // }
 
-    spdlog::info("Vertices: {}, Indices: {}", mesh.face_vertices.size(), mesh.face_indices.size());
+    // spdlog::info("Vertices: {}, Indices: {}", mesh.face_vertices.size(), mesh.face_indices.size());
+    // spdlog::info(mesh.num_tri);
 
     glBindVertexArray(mesh.VAO);
     glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
