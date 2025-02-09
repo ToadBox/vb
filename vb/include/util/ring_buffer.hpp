@@ -2,6 +2,7 @@
 #define VB_RINGBUFFER_HPP
 
 #include <cstdint>
+#include <stdexcept>
 
 namespace vb {
 

@@ -8,6 +8,8 @@
 
 namespace vb {
 
+class Blocks;
+
 enum class BlockRenderType : uint32_t {
     OPAQUE,
     TRANSPARENT,
@@ -39,6 +41,7 @@ public:
 private:
     BlockRenderType render_type;
     float hardness;
+friend Blocks;
 };
 
 }

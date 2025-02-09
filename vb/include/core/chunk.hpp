@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <functional>
 
-#include "core/blocks.hpp"
+#include "core/block_registry.hpp"
 #include "core/mesh.hpp"
 
 #include "glm/glm.hpp"

@@ -3,7 +3,6 @@
 
 #include <concepts>
 
-#include "core/blocks.hpp"
 #include "core/registry_object.hpp"
 
 #include <functional>

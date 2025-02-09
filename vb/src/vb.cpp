@@ -22,8 +22,11 @@
 #include "client/input.hpp"
 #include "client/profiling.hpp"
 
-#include "core/blocks.hpp"
-#include "core/world.hpp"
+#include "core/block_registry.hpp"
+
+#include "core/planet.hpp"
+#include "core/chunk2.hpp"
+#include "core/texture_atlas.hpp"
 
 namespace {
     float vertices[] = {
@@ -98,7 +101,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     spdlog::set_level(spdlog::level::debug);
 
     // setup input and camera
-    vb::Camera camera;
+    vb::Camera camera(glm::vec3(0, 0, 17));
     vb::Input input;
 
     // setup window
@@ -138,9 +141,9 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CW);
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
+    // glFrontFace(GL_CW);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -189,10 +192,15 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     ImGui_ImplOpenGL3_Init("#version 330");
 
     // register blocks
-    vb::Blocks::registerBlocks();
+    vb::Blocks* blocks = &vb::Blocks::get();
+    blocks->registerBlocks();
 
     // create world
-    vb::World world;
+    // vb::World world;
+    vb::TextureAtlas* atlas = &vb::TextureAtlas::getAtlas();
+    atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png");
+    vb::Planet earth;
+    earth.setChunkDefaultShader(&block_shader);
 
     vb::Profiler profiler;
 
@@ -214,10 +222,8 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         // process input events
         input.processInput(dt);
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.0f, 0.7f, 0.7f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-        glBindTexture(GL_TEXTURE_2D, texture);
 
         // New ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -228,27 +234,28 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         block_shader.setMat4("projection", &projection);
         glm::mat4 view = camera.View();
         block_shader.setMat4("view", &view);
-        glm::vec3 model = glm::vec3(1.0f);
-        block_shader.setVec3("model", &model);
+        glm::mat4 model = glm::mat4(1.0f);
+        block_shader.setMat4("model", &model);
 
         // spdlog::debug("Camera Pos: {}, {}, {}", camera.Position().x, camera.Position().y, camera.Position().z);
         // spdlog::debug("View Matrix: \n{}\n{}\n{}\n{}", glm::to_string(view[0]), glm::to_string(view[1]), glm::to_string(view[2]), glm::to_string(view[3]));
         // spdlog::debug("Projection Matrix: \n{}\n{}\n{}\n{}", glm::to_string(projection[0]), glm::to_string(projection[1]), glm::to_string(projection[2]), glm::to_string(projection[3]));
-        
-        world.update();
-
-        // draw cube
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
 
         // draw world
-        world.update();
-        
+        // world.update();
+        earth.update();
+        // earth.render();
+
+        // draw cube
+        glBindVertexArray(2);
+        glBindTexture(GL_TEXTURE_2D, atlas->getTex());
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
         if (input.getContext()->debug) {
             ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text("Position: x: %0.6f, y: %0.6f, z: %0.6f", camera.Position().x, camera.Position().y, camera.Position().z);
+            ImGui::Text("Heading: Pitch: %0.6f, Yaw: %0.6f", camera.Heading().x, camera.Heading().y);
             ImGui::SliderInt("FPS target", &FPS_CAP, 30, 144);
             ImGui::Text("FPS: %0.1f", profiler.getFPS());
             ImGui::Text("Frametime: %0.2f us", profiler.getFrametimeUS());
@@ -270,7 +277,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     }
 
     ImGui_ImplOpenGL3_Shutdown();
-	  ImGui_ImplGlfw_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
   	ImGui::DestroyContext();
 
     glfwTerminate();

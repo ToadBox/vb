@@ -52,6 +52,12 @@ void vb::Camera::Move(CameraMovementDirection direction, float dt) {
 void vb::Camera::Look(float xoff, float yoff) {
     yaw += invertX * xoff * sensitivity;
     pitch += invertY * yoff * sensitivity;
+    if (yaw > 360) {
+        yaw -= 360;
+    }
+    if (yaw < -360) {
+        yaw += 360;
+    }
 
     // clamp pitch to avoid gimbal lock
     if (pitch > 89.0f) pitch = 89.0f;

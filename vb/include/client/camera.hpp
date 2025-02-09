@@ -29,6 +29,7 @@ public:
     void Look(float xoff, float yoff);
 
     glm::vec3 Position() const {return position;};
+    glm::vec2 Heading() const {return glm::vec2(pitch, yaw);};
 
     void setSensitivity(float sensitivity);
 private:
