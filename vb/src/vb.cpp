@@ -78,6 +78,19 @@ namespace {
 
     unsigned int window_width = 0;
     unsigned int window_height = 0;
+
+    std::string getAssetPath(const std::string& relativePath) {
+        char result[PATH_MAX];
+        ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+        if (count != -1) {
+            std::string execPath(result, count);
+            std::string execDir = execPath.substr(0, execPath.find_last_of("/"));
+            std::string projectRoot = execDir.substr(0, execDir.find_last_of("/"));
+            projectRoot = projectRoot.substr(0, projectRoot.find_last_of("/"));
+            return projectRoot + "/" + relativePath;
+        }
+        return relativePath; 
+    }
 }
 
 // callback for window resize
@@ -164,7 +177,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
 
-    vb::Shader block_shader("/home/yameat/Desktop/Programming/vb/vb/shaders/block/block.vs", "/home/yameat/Desktop/Programming/vb/vb/shaders/block/block.fs");
+    vb::Shader block_shader(getAssetPath("vb/shaders/block/block.vs").c_str(), getAssetPath("vb/shaders/block/block.fs").c_str());
 
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -174,13 +187,14 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     int width, height, nrChannels;
-    const char* loc = "/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png";
-    unsigned char *data = stbi_load(loc, &width, &height, &nrChannels, 0);
+    std::string assetPath = getAssetPath("assets/blocks/missing.png");
+    unsigned char *data = stbi_load(assetPath.c_str(), &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
+        spdlog::debug("Texture loaded: {} x {}, channels: {}", width, height, nrChannels);
     } else {
-        spdlog::error("Failed to load texture {}", loc);
+        spdlog::error("Failed to load texture {}", assetPath);
     }
     stbi_image_free(data);
     // Initialize ImGui
@@ -198,7 +212,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     // create world
     // vb::World world;
     vb::TextureAtlas* atlas = &vb::TextureAtlas::getAtlas();
-    atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png");
+    atlas->loadFromFile(assetPath.c_str());
     vb::Planet earth;
     earth.setChunkDefaultShader(&block_shader);
 
