@@ -1,6 +1,7 @@
 #include "client/camera.hpp"
 #include <spdlog/spdlog.h>
 #include <algorithm>
+#include <cmath>
 
 #define DEFAULT_SENSITIVITY 0.05f
 #define MINIMUM_SENSITIVITY 0.001f
@@ -34,10 +35,10 @@ void vb::Camera::Move(CameraMovementDirection direction, float dt) {
             position -= camera_speed * proj_front;
             break;
         case CameraMovementDirection::LEFT:
-            position -= camera_speed * glm::cross(front, world_up);
+            position -= camera_speed * glm::normalize(glm::cross(front, world_up));
             break;
         case CameraMovementDirection::RIGHT:
-            position += camera_speed * glm::cross(front, world_up);
+            position += camera_speed * glm::normalize(glm::cross(front, world_up));
             break;
         case CameraMovementDirection::UP:
             position += camera_speed * world_up;
@@ -78,15 +79,20 @@ const glm::mat4 vb::Camera::View() const {
     return glm::lookAt(position, position+front, glm::vec3(0.0, 1.0, 0.0));
 }
 
-std::string vb::Camera::LookingTowards() const {
-    std::string result = "";
+char* vb::Camera::LookingTowards() const {
+    static char result[] = "-X -Z ( N  )";
     float dotx = glm::dot(front, glm::vec3(1,0,0));
-    result = dotx >= 0 ? "+" : "-";
-    result += "X";
+    result[0] = dotx >= 0 ? '+' : '-';
     float dotz = glm::dot(front, glm::vec3(0,0,1));
-    if (dotz > dotx) {
-        result = dotz >= 0 ? "+" : "-";
-        result += "Z";
+    result[3] = dotz >= 0 ? '+' : '-';
+
+    // if dotx and dotz are similar, we are in NE,NW,SW,SE
+    if (std::abs(std::abs(dotx) - std::abs(dotz)) > 0.25) {
+        result[8] = (std::abs(dotx) > std::abs(dotz)) ? (dotx > 0 ? 'N' : 'S') : (dotz > 0 ? 'E' : 'W');
+        result[9] = ' ';
+    } else {
+        result[8] = dotx > 0 ? 'N' : 'S';
+        result[9] = dotz > 0 ? 'E' : 'W';
     }
     return result;
 }

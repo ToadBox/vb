@@ -17,6 +17,7 @@ public:
     RegistryObject(const std::string& name) : name(name) {};
     virtual ~RegistryObject() = default;
     const inline std::string& GetName() const {return name;};
+    inline uint64_t GetID() const {return ID;};
 private:
     uint64_t ID;
     std::string name;

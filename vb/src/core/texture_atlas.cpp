@@ -7,12 +7,12 @@ vb::TextureAtlas::TextureAtlas() {
     
 }
 
-void vb::TextureAtlas::bindTextureRegion(const uint64_t ID, const TextureRegion& region) {
+void vb::TextureAtlas::bindTextureRegion(uint64_t ID, const TextureRegion& region) {
     atlas[ID] = region;
 }
 
-void vb::TextureAtlas::bindTextureRegion(const uint64_t ID, uint64_t x, uint64_t y, uint64_t width, uint64_t height) {
-    atlas[ID] = {x,y,width,height};
+void vb::TextureAtlas::bindTextureRegion(uint64_t ID, uint64_t x, uint64_t y, uint32_t length) {
+    atlas[ID] = {x,y,length};
 }
 
 void vb::TextureAtlas::loadFromFile(const char* loc) {
@@ -33,15 +33,47 @@ void vb::TextureAtlas::loadFromFile(const char* loc) {
         spdlog::error("Failed to load texture atlas {}", loc);
     }
     stbi_image_free(data);
+    // spdlog::info("{}x{} @depth of {}", width, height, nrChannels);
 }
 
-vb::NormalizedTextureRegion vb::TextureAtlas::getNormalizedTexCoords(const uint64_t ID) {
+vb::NormalizedTextureRegion vb::TextureAtlas::getNormalizedTexCoords(const uint64_t ID, Face face) {
     TextureRegion region = atlas[ID];
-    float width = static_cast<float>(this->width);
-    float height = static_cast<float>(this->height);
-    float x0 = (region.x) / width;
-    float y0 = (region.y) / height;
-    return {x0, y0, x0+(region.x+region.width)/width, y0+(region.y+region.height)/height};
+    float width, height, x0, y0, x0_offset;
+
+    switch (region.length) {
+        case 3:
+            switch (face) {
+                case Face::NORTH:
+                case Face::SOUTH:
+                case Face::EAST:
+                case Face::WEST:
+                    x0_offset = TextureAtlas::TEX_SIZE;
+                    break;
+                case Face::BOT:
+                    x0_offset = 2 * TextureAtlas::TEX_SIZE;
+                    break;
+                case Face::TOP:
+                    x0_offset = 0;
+                    break;
+            }
+            break;
+
+        case 6:
+            x0_offset = (uint8_t) face * TextureAtlas::TEX_SIZE;
+            break;
+        
+        case 1:
+        default:
+            x0_offset = 0;
+            break;
+    }
+       
+    width = static_cast<float>(this->width);
+    height = static_cast<float>(this->height);
+    x0 = (region.x + x0_offset) / width;
+    y0 = (region.y) / height;
+    // texture must be flipped due to atlas (0,0) in top left convention
+    return {x0+(TextureAtlas::TEX_SIZE)/width, y0+(TextureAtlas::TEX_SIZE)/height, x0, y0};
 }
 
 unsigned int vb::TextureAtlas::getTex() {

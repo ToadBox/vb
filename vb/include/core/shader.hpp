@@ -11,6 +11,7 @@
 namespace vb {
 
 struct Shader {
+    Shader() = default;
     Shader(const char* vertexShaderPath, const char* fragmentShaderPath);
 
     void use();
@@ -23,7 +24,7 @@ struct Shader {
     void setQuat(const std::string& name, const glm::quat* const value) const;
     void setMat4(const std::string& name, const glm::mat4* const value) const;
 
-    unsigned int ID;
+    unsigned int ID = 0;
     std::shared_ptr<spdlog::logger> console;
 };
 

@@ -22,7 +22,7 @@ enum class CameraMovementDirection : uint8_t {
 
 class Camera {
 public:
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 5.0f), float yaw = -90, float pitch = 0);
+    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 5.0f), float yaw = 0, float pitch = 0);
 
     const glm::mat4 View() const;
 
@@ -31,7 +31,7 @@ public:
 
     glm::vec3 Position() const {return position;};
     glm::vec2 Heading() const {return glm::vec2(pitch, yaw);};
-    std::string LookingTowards() const;
+    char* LookingTowards() const;
 
     void setSensitivity(float sensitivity);
 private:

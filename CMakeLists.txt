@@ -21,7 +21,7 @@ vb/src/client/camera.cpp
 vb/src/client/input.cpp 
 vb/src/client/profiling.cpp
 vb/src/core/block_registry.cpp
-vb/src/core/chunk2.cpp
+vb/src/core/chunk.cpp
 vb/src/core/planet.cpp
 vb/src/core/texture_atlas.cpp
 )

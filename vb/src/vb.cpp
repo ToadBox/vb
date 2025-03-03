@@ -25,7 +25,7 @@
 #include "core/block_registry.hpp"
 
 #include "core/planet.hpp"
-#include "core/chunk2.hpp"
+#include "core/chunk.hpp"
 #include "core/texture_atlas.hpp"
 
 namespace {
@@ -139,11 +139,11 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     window_width = framebufferWidth;
     window_height = framebufferHeight;
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
-    // glFrontFace(GL_CW);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -198,9 +198,9 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     // create world
     // vb::World world;
     vb::TextureAtlas* atlas = &vb::TextureAtlas::getAtlas();
-    atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/missing.png");
+    atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/atlas.png");
     vb::Planet earth;
-    earth.setChunkDefaultShader(&block_shader);
+    earth.setDefaultShader(&block_shader);
 
     vb::Profiler profiler;
 
@@ -234,15 +234,12 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
         block_shader.setMat4("projection", &projection);
         glm::mat4 view = camera.View();
         block_shader.setMat4("view", &view);
-        glm::mat4 model = glm::mat4(1.0f);
-        block_shader.setMat4("model", &model);
 
         // spdlog::debug("Camera Pos: {}, {}, {}", camera.Position().x, camera.Position().y, camera.Position().z);
         // spdlog::debug("View Matrix: \n{}\n{}\n{}\n{}", glm::to_string(view[0]), glm::to_string(view[1]), glm::to_string(view[2]), glm::to_string(view[3]));
         // spdlog::debug("Projection Matrix: \n{}\n{}\n{}\n{}", glm::to_string(projection[0]), glm::to_string(projection[1]), glm::to_string(projection[2]), glm::to_string(projection[3]));
 
         // draw world
-        // world.update();
         earth.update();
         earth.render();
 
@@ -256,7 +253,7 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
             ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text("Position: x: %0.6f, y: %0.6f, z: %0.6f", camera.Position().x, camera.Position().y, camera.Position().z);
             ImGui::Text("Heading: Pitch: %0.6f, Yaw: %0.6f", camera.Heading().x, camera.Heading().y);
-            ImGui::Text("Looking towards: %s", camera.LookingTowards().c_str());
+            ImGui::Text("Looking towards: %s", camera.LookingTowards());
             ImGui::SliderInt("FPS target", &FPS_CAP, 30, 144);
             ImGui::Text("FPS: %0.1f", profiler.getFPS());
             ImGui::Text("Frametime: %0.2f us", profiler.getFrametimeUS());

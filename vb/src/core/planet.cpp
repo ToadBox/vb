@@ -43,26 +43,16 @@ void vb::Planet::update() {
 }
 
 void vb::Planet::render() {
-    static bool log_once = true;
     // render all chunks
     for (auto& [pos,chunk] : loaded_chunks) {
         if (chunk == nullptr) {
             continue;
         }
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, pos.z) * static_cast<float>(vb::Chunk::SIZE));
-        shader->use();
-        shader->setMat4("model", &model);
-        
-        if (log_once) {
-            spdlog::warn(glm::to_string(model));
-            log_once = false;
-        }
-
         chunk->render();
     }
 }
 
-void vb::Planet::setChunkDefaultShader(Shader* shader) {
+void vb::Planet::setDefaultShader(Shader* const shader) {
     this->shader = shader;
     for (auto& [pos,chunk] : loaded_chunks) {
         if (chunk == nullptr) {

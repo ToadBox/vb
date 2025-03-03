@@ -2,11 +2,10 @@
 #define VB_PLANET_HPP
 
 #include "util/ring_buffer.hpp"
-#include "core/chunk2.hpp"
+#include "core/chunk.hpp"
 
 #include <array>
 #include "glm/vec3.hpp"
-
 
 namespace vb {
 class Chunk;
@@ -20,12 +19,15 @@ public:
     void update();
     void render();
 
-    void setChunkDefaultShader(Shader* shader);
+    void setDefaultShader(Shader* const shader);
+
     Chunk* getChunkAt(const PlanetPos& pos);
 private:
     // RingBuffer<Chunk, 16> loaded_chunks;
     std::unordered_map<PlanetPos, Chunk*, PlanetPosHash> loaded_chunks;
     Shader* shader;
+
+    uint64_t seed;
 };
 
 }

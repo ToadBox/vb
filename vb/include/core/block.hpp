@@ -8,6 +8,15 @@
 
 namespace vb {
 
+enum class Face : uint8_t {
+    TOP,
+    NORTH,
+    EAST,
+    SOUTH,
+    WEST,
+    BOT
+};
+
 class Blocks;
 
 enum class BlockRenderType : uint32_t {

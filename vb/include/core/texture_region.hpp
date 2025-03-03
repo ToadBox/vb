@@ -6,12 +6,13 @@
 namespace vb {
 
 struct TextureRegion {
-    uint64_t x, y, width, height;
+    uint64_t x, y;
+    uint32_t length;
 };
 
 struct NormalizedTextureRegion {
     float x0,y0, x1,y1;
-};  
+};
 
 }
 

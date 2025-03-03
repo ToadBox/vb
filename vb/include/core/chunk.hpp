@@ -46,6 +46,9 @@ public:
     void set(const ChunkPos& pos, Blocks::ByID ID);
 private:
     std::unordered_map<ChunkPos, uint64_t, ChunkPosHash> blocks;
+    // std::unordered_map<ChunkPos, uint64_t, ChunkPosHash> foliage_blocks;
+    // std::unordered_map<ChunkPos, uint64_t, ChunkPosHash> biome_overrides;
+    uint64_t biome_id;
     Chunk* chunk;
 friend Chunk;
 };
@@ -74,18 +77,18 @@ public:
     ~Chunk();
     Chunk& operator=(const Chunk&) = delete;
 
-    void setDefaultShader(Shader* shader);
-
     void update();
     void render();
+
+    void setDefaultShader(Shader* const shader);
 private:
     void build();
 
     ChunkMesh mesh;
     ChunkData data;
     TextureAtlas* atlas;
-    Shader* shader;
     Planet* planet;
+    Shader* shader;
     PlanetPos pos;
 
     bool dirty;
