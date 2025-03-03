@@ -16,7 +16,10 @@ public:
         AIR         = 0,
         DIRT        = 1,
         GRASS       = 2,
-        STONE       = 3
+        STONE       = 3,
+        SAND        = 4,
+        GRAVEL      = 5,
+        WATER       = 6
     };
 
     static Blocks& get() {

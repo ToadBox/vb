@@ -24,6 +24,8 @@ vb/src/core/block_registry.cpp
 vb/src/core/chunk.cpp
 vb/src/core/planet.cpp
 vb/src/core/texture_atlas.cpp
+vb/src/core/noise.cpp
+vb/src/core/world_gen.cpp
 )
 
 target_include_directories(vb PRIVATE ${CMAKE_SOURCE_DIR}/vb/include ${CMAKE_SOURCE_DIR}/external)

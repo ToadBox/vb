@@ -22,4 +22,7 @@ void vb::Blocks::registerBlocks() {
     vb::Blocks::registerBlock(vb::Block("dirt", vb::BlockRenderType::OPAQUE, 0.3f), vb::Blocks::ByID::DIRT, TextureRegion(64,0,1));
     vb::Blocks::registerBlock(vb::Block("grass", vb::BlockRenderType::OPAQUE, 0.5f), vb::Blocks::ByID::GRASS, TextureRegion(0,0,3));
     vb::Blocks::registerBlock(vb::Block("stone", vb::BlockRenderType::OPAQUE, 1.0f), vb::Blocks::ByID::STONE, TextureRegion(0,32,1));
+    vb::Blocks::registerBlock(vb::Block("sand", vb::BlockRenderType::OPAQUE, 1.0f), vb::Blocks::ByID::SAND, TextureRegion(0,64,1));
+    vb::Blocks::registerBlock(vb::Block("gravel", vb::BlockRenderType::OPAQUE, 1.0f), vb::Blocks::ByID::GRAVEL, TextureRegion(32,64,1));
+    vb::Blocks::registerBlock(vb::Block("water", vb::BlockRenderType::TRANSPARENT, 1.0f), vb::Blocks::ByID::WATER, TextureRegion(0,96,4));
 }

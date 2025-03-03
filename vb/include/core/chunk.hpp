@@ -15,6 +15,7 @@
 namespace vb {
 class Chunk;
 class Planet;
+class WorldGenerator;
 
 struct ChunkPos : public glm::i32vec3 {
     ChunkPos() = default;
@@ -72,7 +73,7 @@ class Chunk {
 public:
     static constexpr uint8_t SIZE = 16;
     static_assert(SIZE > 0);
-    Chunk(Planet* planet, const PlanetPos& pos);
+    Chunk(Planet* planet, const PlanetPos& pos, WorldGenerator* gen);
     Chunk(const Chunk&) = delete;
     ~Chunk();
     Chunk& operator=(const Chunk&) = delete;

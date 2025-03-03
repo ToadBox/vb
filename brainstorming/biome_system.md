@@ -1,0 +1,1 @@
+1) each chunk has its own XZ biome map

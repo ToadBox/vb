@@ -21,6 +21,9 @@ public:
 
     void setDefaultShader(Shader* const shader);
 
+    float getTemperature(const PlanetPos& pos);
+    float getHumidity(const PlanetPos& pos);
+
     Chunk* getChunkAt(const PlanetPos& pos);
 private:
     // RingBuffer<Chunk, 16> loaded_chunks;

@@ -1,9 +1,10 @@
 #include "core/chunk.hpp"
+#include "core/planet.hpp"
+#include "core/world_gen.hpp"
 
 #include "glad/gl.h"
 
 #include "spdlog/spdlog.h"
-#include "core/planet.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/string_cast.hpp"
@@ -93,38 +94,13 @@ vb::ChunkMesh::~ChunkMesh() {
     glDeleteBuffers(1, &EBO);
 }
 
-vb::Chunk::Chunk(Planet* planet, const PlanetPos& pos) : mesh(this), data(this) {
-    spdlog::info("chgungky");
+vb::Chunk::Chunk(Planet* planet, const PlanetPos& pos, WorldGenerator* gen) : mesh(this), data(this) {
     this->planet = planet;
     this->pos = pos;
     dirty = true;
     atlas = &vb::TextureAtlas::getAtlas();
     shader = nullptr;
-
-    // place layer of grass at y=15
-    for (uint8_t x = 0; x < Chunk::SIZE; x++) {
-        for (uint8_t z = 0; z < Chunk::SIZE; z++) {
-            auto pos = ChunkPos(x, SIZE-1, z);
-            data.set(pos, Blocks::ByID::GRASS);
-        }
-    }
-    // spdlog::critical(data.blocks.size());
-    // place 5 layers of dirt
-    for (uint8_t x = 0; x < Chunk::SIZE; x++) {
-        for (uint8_t z = 0; z < Chunk::SIZE; z++) {
-            for (int8_t y = SIZE-2; y > SIZE-8; y--) {
-                data.set(ChunkPos(x, y, z), Blocks::ByID::DIRT);
-            }
-        }
-    }
-    // place many layers of stone
-    for (uint8_t x = 0; x < Chunk::SIZE; x++) {
-        for (uint8_t z = 0; z < Chunk::SIZE; z++) {
-            for (int8_t y = SIZE-8; y >= 0; y--) {
-                data.set(ChunkPos(x, y, z), Blocks::ByID::STONE);
-            }
-        }
-    }
+    gen->generateChunk(&data);
 }
 
 vb::Chunk::~Chunk() {

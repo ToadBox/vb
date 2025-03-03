@@ -1,20 +1,25 @@
 #include "core/planet.hpp"
+#include "core/noise.hpp"
+#include "core/world_gen.hpp"
 
 #include "spdlog/spdlog.h"
 #include "glm/gtc/matrix_transform.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/string_cast.hpp"
 
+#define TEST_SEED 0x5776354c
+
 vb::PlanetPos::PlanetPos(int64_t x, int64_t y, int64_t z) : glm::i64vec3(x,y,z) {
     
 }
 
 vb::Planet::Planet() {
+    WorldGenerator gen;
     uint16_t i = 0;
     for (int8_t x = -1; x <= 1; x++) {
         for (int8_t z = -1; z <= 1; z++) {
             auto pos = PlanetPos(x, -1, z);
-            loaded_chunks[pos] = new Chunk(this, pos);
+            loaded_chunks[pos] = new Chunk(this, pos, &gen);
             i++;
         }
     }
