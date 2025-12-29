@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include "core/texture_atlas.hpp"
+#include "core/texture_overlay_atlas.hpp"
 #include "core/planet_pos.hpp"
 #include "core/block_registry.hpp"
 #include "core/shader.hpp"
@@ -35,6 +36,7 @@ struct ChunkPosHash {
 struct MeshVertex {
     float x,y,z;
     float u,v;
+    float biome_r, biome_g, biome_b;
 };
 
 class ChunkData {
@@ -88,6 +90,7 @@ private:
     ChunkMesh mesh;
     ChunkData data;
     TextureAtlas* atlas;
+    TextureOverlayAtlas* overlay_atlas;
     Planet* planet;
     Shader* shader;
     PlanetPos pos;

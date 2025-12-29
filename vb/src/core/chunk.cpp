@@ -85,6 +85,8 @@ vb::ChunkMesh::ChunkMesh(Chunk* chunk) {
     glEnableVertexAttribArray(0); 
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*)offsetof(MeshVertex, u));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), (void*)offsetof(MeshVertex, biome_r));
+    glEnableVertexAttribArray(2);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 }
 
@@ -99,6 +101,7 @@ vb::Chunk::Chunk(Planet* planet, const PlanetPos& pos, WorldGenerator* gen) : me
     this->pos = pos;
     dirty = true;
     atlas = &vb::TextureAtlas::getAtlas();
+    overlay_atlas = &vb::TextureOverlayAtlas::getAtlas();
     shader = nullptr;
     gen->generateChunk(&data);
 }
@@ -115,10 +118,22 @@ void vb::Chunk::update() {
 
 void vb::Chunk::render() {
     glBindVertexArray(mesh.VAO);
-    glBindTexture(GL_TEXTURE_2D, atlas->getTex());
     shader->use();
+    
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, atlas->getTex());
+    shader->setInt("baseTex", 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, overlay_atlas->getTex());
+    shader->setInt("overlayTex", 1);
+
+    glm::vec3 biome_color{0, 0.342, 0.071};
+    shader->setVec3("biome", &biome_color);
+
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, pos.z) * static_cast<float>(vb::Chunk::SIZE));
     shader->setMat4("model", &model);
+
     glDrawElements(GL_TRIANGLES, mesh.face_indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
@@ -133,15 +148,22 @@ void vb::Chunk::build() {
         NormalizedTextureRegion region;
         uint8_t num_faces_added = 0;
         glm::vec3 pos = glm::vec3(chunkpos);
+
+        glm::vec3 biome_color = glm::vec3(1.0, 1.0, 1.0);
+
+        if (blockid == static_cast<uint64_t>(Blocks::ByID::GRASS)) {
+            // TODO: get biome at block
+            biome_color = glm::vec3(0.486, 0.741, 0.42);
+        }
         
         // TOP
         if (!data.isBlockAt(ChunkPos(pos.x, pos.y+1, pos.z))) {
             region = TextureAtlas::getAtlas().getNormalizedTexCoords(blockid, Face::TOP);
             MeshVertex Top[4] = {
-                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x1, region.y1,
-                pos.x,      pos.y+1.0f, pos.z+1.0f, region.x1, region.y0,
-                pos.x,      pos.y+1.0f, pos.z,      region.x0, region.y0,
-                pos.x+1.0f, pos.y+1.0f, pos.z,      region.x0, region.y1
+                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x1, region.y1, biome_color.r, biome_color.g, biome_color.b,
+                pos.x,      pos.y+1.0f, pos.z+1.0f, region.x1, region.y0, biome_color.r, biome_color.g, biome_color.b,
+                pos.x,      pos.y+1.0f, pos.z,      region.x0, region.y0, biome_color.r, biome_color.g, biome_color.b,
+                pos.x+1.0f, pos.y+1.0f, pos.z,      region.x0, region.y1, biome_color.r, biome_color.g, biome_color.b
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), Top, Top+4);
             num_faces_added++;
@@ -150,10 +172,10 @@ void vb::Chunk::build() {
         if (!data.isBlockAt(ChunkPos(pos.x-1, pos.y, pos.z))) {
             region = TextureAtlas::getAtlas().getNormalizedTexCoords(blockid, Face::SOUTH);
             MeshVertex South[4] = {
-                pos.x, pos.y+1.0f,  pos.z+1.0f,     region.x1, region.y1,
-                pos.x, pos.y,       pos.z+1.0f,     region.x1, region.y0,
-                pos.x, pos.y,       pos.z,          region.x0, region.y0,
-                pos.x, pos.y+1.0f,  pos.z,          region.x0, region.y1
+                pos.x, pos.y+1.0f,  pos.z+1.0f,     region.x1, region.y1, biome_color.r, biome_color.g, biome_color.b,
+                pos.x, pos.y,       pos.z+1.0f,     region.x1, region.y0, 1.0, 1.0, 1.0,
+                pos.x, pos.y,       pos.z,          region.x0, region.y0, 1.0, 1.0, 1.0,
+                pos.x, pos.y+1.0f,  pos.z,          region.x0, region.y1, biome_color.r, biome_color.g, biome_color.b,
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), South, South+4);
             num_faces_added++;
@@ -162,10 +184,10 @@ void vb::Chunk::build() {
         if (!data.isBlockAt(ChunkPos(pos.x, pos.y, pos.z+1))) {
             region = TextureAtlas::getAtlas().getNormalizedTexCoords(blockid, Face::EAST);
             MeshVertex East[4]  = {
-                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x1, region.y1,
-                pos.x+1.0f, pos.y,      pos.z+1.0f, region.x1, region.y0,
-                pos.x,      pos.y,      pos.z+1.0f, region.x0, region.y0,
-                pos.x,      pos.y+1.0f, pos.z+1.0f, region.x0, region.y1
+                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x1, region.y1, biome_color.r, biome_color.g, biome_color.b,
+                pos.x+1.0f, pos.y,      pos.z+1.0f, region.x1, region.y0, 1.0, 1.0, 1.0,
+                pos.x,      pos.y,      pos.z+1.0f, region.x0, region.y0, 1.0, 1.0, 1.0,
+                pos.x,      pos.y+1.0f, pos.z+1.0f, region.x0, region.y1, biome_color.r, biome_color.g, biome_color.b,
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), East, East+4);
             num_faces_added++;
@@ -174,10 +196,10 @@ void vb::Chunk::build() {
         if (!data.isBlockAt(ChunkPos(pos.x, pos.y, pos.z-1))) {
             region = TextureAtlas::getAtlas().getNormalizedTexCoords(blockid, Face::WEST);
             MeshVertex West[4]  = {
-                pos.x,      pos.y+1.0f, pos.z,      region.x1, region.y1,
-                pos.x,      pos.y,      pos.z,      region.x1, region.y0,
-                pos.x+1.0f, pos.y,      pos.z,      region.x0, region.y0,
-                pos.x+1.0f, pos.y+1.0f, pos.z,      region.x0, region.y1
+                pos.x,      pos.y+1.0f, pos.z,      region.x1, region.y1, biome_color.r, biome_color.g, biome_color.b,
+                pos.x,      pos.y,      pos.z,      region.x1, region.y0, 1.0, 1.0, 1.0,
+                pos.x+1.0f, pos.y,      pos.z,      region.x0, region.y0, 1.0, 1.0, 1.0,
+                pos.x+1.0f, pos.y+1.0f, pos.z,      region.x0, region.y1, biome_color.r, biome_color.g, biome_color.b,
             };
             
             mesh.face_vertices.insert(mesh.face_vertices.end(), West, West+4);
@@ -187,10 +209,10 @@ void vb::Chunk::build() {
         if (!data.isBlockAt(ChunkPos(pos.x+1, pos.y, pos.z))) {
             region = TextureAtlas::getAtlas().getNormalizedTexCoords(blockid, Face::NORTH);
             MeshVertex North[4]  = {
-                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x0, region.y1,
-                pos.x+1.0f, pos.y+1.0f, pos.z,      region.x1, region.y1,
-                pos.x+1.0f, pos.y,      pos.z,      region.x1, region.y0,
-                pos.x+1.0f, pos.y,      pos.z+1.0f, region.x0, region.y0
+                pos.x+1.0f, pos.y+1.0f, pos.z+1.0f, region.x0, region.y1, biome_color.r, biome_color.g, biome_color.b,
+                pos.x+1.0f, pos.y+1.0f, pos.z,      region.x1, region.y1, biome_color.r, biome_color.g, biome_color.b,
+                pos.x+1.0f, pos.y,      pos.z,      region.x1, region.y0, 1.0, 1.0, 1.0,
+                pos.x+1.0f, pos.y,      pos.z+1.0f, region.x0, region.y0, 1.0, 1.0, 1.0,
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), North, North+4);
             num_faces_added++;
@@ -199,10 +221,10 @@ void vb::Chunk::build() {
         if (!data.isBlockAt(ChunkPos(pos.x, pos.y-1, pos.z))) {
             region = TextureAtlas::getAtlas().getNormalizedTexCoords(blockid, Face::BOT);
             MeshVertex Bot[4]  = {
-                pos.x+1.0f, pos.y, pos.z+1.0f,      region.x1, region.y0,
-                pos.x+1.0f, pos.y, pos.z,           region.x0, region.y0,
-                pos.x,      pos.y, pos.z,           region.x0, region.y1,
-                pos.x,      pos.y, pos.z+1.0f,      region.x1, region.y1
+                pos.x+1.0f, pos.y, pos.z+1.0f,      region.x1, region.y0, 1.0, 1.0, 1.0,
+                pos.x+1.0f, pos.y, pos.z,           region.x0, region.y0, 1.0, 1.0, 1.0,
+                pos.x,      pos.y, pos.z,           region.x0, region.y1, 1.0, 1.0, 1.0,
+                pos.x,      pos.y, pos.z+1.0f,      region.x1, region.y1, 1.0, 1.0, 1.0,
             };
             mesh.face_vertices.insert(mesh.face_vertices.end(), Bot, Bot+4);
             num_faces_added++;

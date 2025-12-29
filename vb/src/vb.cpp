@@ -27,6 +27,7 @@
 #include "core/planet.hpp"
 #include "core/chunk.hpp"
 #include "core/texture_atlas.hpp"
+#include "core/texture_overlay_atlas.hpp"
 
 namespace {
     float vertices[] = {
@@ -199,6 +200,10 @@ int main([[maybe_unused]] int argc,[[maybe_unused]] char** argv) {
     // vb::World world;
     vb::TextureAtlas* atlas = &vb::TextureAtlas::getAtlas();
     atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/atlas.png");
+
+    vb::TextureOverlayAtlas* overlay_atlas = &vb::TextureOverlayAtlas::getAtlas();
+    overlay_atlas->loadFromFile("/home/yameat/Desktop/Programming/vb/assets/blocks/overlays.png");
+
     vb::Planet earth;
     earth.setDefaultShader(&block_shader);
 

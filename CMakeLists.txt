@@ -24,6 +24,7 @@ vb/src/core/block_registry.cpp
 vb/src/core/chunk.cpp
 vb/src/core/planet.cpp
 vb/src/core/texture_atlas.cpp
+vb/src/core/texture_overlay_atlas.cpp
 vb/src/core/noise.cpp
 vb/src/core/world_gen.cpp
 )
